@@ -1,0 +1,417 @@
+---
+title: "Calling APIs"
+format: html
+editor: visual
+theme: darkly
+toc: true
+toc-depth: 3
+code-fold: true
+code-tools: false
+number-sections: true
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+---
+<style>
+.custom-green details {
+  border: 2px solid #22c55e;
+  border-radius: 8px;
+  padding: 0;
+  background-color: #1a1a1a;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+.custom-green summary {
+  background-color: #22c55e;
+  color: #000000;
+  padding: 15px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  list-style: none;
+  user-select: none;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.custom-green summary:hover {
+  background-color: #16a34a;
+}
+
+.custom-green summary::before {
+  content: "▶";
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.3s ease;
+  font-size: 14px;
+}
+
+.custom-green details[open] summary::before {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.custom-green .content {
+  padding: 20px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.custom-green pre {
+  background-color: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 15px;
+  margin: 15px 0;
+  color: #f8f8f2;
+  overflow-x: auto;
+}
+
+.custom-green code {
+  background-color: #374151;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #e5e7eb;
+}
+</style>
+
+
+# What is an API?
+
+API, or Application Programming Interface, is a mechanism that allows for two pieces of software to interact and exchange data. APIs function through sending requests from an endpoint. In 'real life' practice, this might mean we as a team send a request to a model for information in return. We either get the requested information or an error message in return.
+
+As APIs may provide access to confidential or sensitive information, providers need to able to verify from whom a request is being sent, to ensure they can safely fulfil an ask (and know where to charge for the request!). This is where API keys come in.
+
+::: {.callout-note}
+Think of an API like ordering food at a restaurant. You, (the intrepid DS team member) make a request to the waiter (the API), who takes it to the kitchen (the server) and brings back your meal (the data) or tells you it's not available on the menu (an error).
+:::
+
+# Why Do We Use API Keys?
+
+There are a number of use cases when we'll need to request the services of models, be it in client-facing projects or internal work. We may face a problem or research question that requires us to request access to specific models through an API.
+
+Generally speaking, we'll find ourselves using something like the OpenAI API for tasks, especially when we are in need of their advanced text models (GPT) for tasks such as classification, or even for specific stages of a workflow, like topic modelling. API keys thus help provide access to these tools, and consequently, are a great resource when we have a particular research problem to solve.
+
+One of the key advantages of using an API instead of downloading and running these models locally (or utilising open-source models) is that it allows us to leverage the computational power and optimisation of the models without needing expensive hardware or vast computational resources.
+
+
+## Managing API Keys: Dos & Don'ts
+
+API keys are foundational for access to leverage these AI models, however, as one fictional mentor-figure once advised, "with great power comes great responsibility".
+
+We know API keys have the potential of granting access to sensitive information or services, and if leaked, this could spell trouble down the line as people abuse requests or ramp up unexpected costs. We need to be particularly prudent in how we handle API key 'security hygiene'.
+
+**1. Never 'Hard-Code' API Keys **
+
+Avoid storing API keys directly in your code as hard-coded variables. This exposes them to anyone with access to your codebase.
+
+**2. Use Environment Variables **
+
+Store API keys in environment variables to keep them separate from the code. This ensures sensitive data isn't exposed, and it's easier to manage keys across different environments if required (development, production, etc.). We will see later in this document that EndpointR offers a tenable solution to this concern. You can also store them as managed secrets by providers like GitHub or Google Colab, for use outside of R/Rstudio/VScode.
+
+
+**3. Version Control Precautions** 
+
+Make sure to add environment files that contain sensitive information (like `.env`, `.Renviron`, and `.Rhistory`) to `.gitignore` so they don't get uploaded to version control systems like GitHub. Exposing API keys in public repositories is a common mistake, and it can be a serious security risk.
+
+
+# Creating Your First API Key
+
+We use the OpenAI API similarly to other public APIs: sign up for an account, obtain an API key, and use it to make API calls to specific models using HTTP requests. You may find there are some use cases whereby you'd need to obtain a HuggingFace API key (dependent on the project or task), in which case, the steps are fairly similar to those of OpenAI.
+
+The principle to navigating public APIs remain pretty consistent across the board: sign up for an account (be it OpenAI API, HuggingFace etc), obtain your API key, and then use it to make API calls to specific models. In the case of OpenAI's API, these calls use HTTP requests.
+
+## Obtain API Key & Authentication: OpenAI API
+
+Let's say you're wanting to work on a text model to help with classification, or you want to use OpenAI's advanced models to help label some data (and your prompt is top-notch). You'll need this key access to their API, much like any fearless, fantasy RPG protagonist needs a way to unlock useful treasures.
+
+For OpenAI, you will need to "unlock" access to their models by acquiring their key for authentication. By performing the following:
+
+**1.** Go to platform.openai.com, and create an account using your SAMY email address.
+
+**2. ** Mike will then add you to the SAMY organisation within the platform. This allows you to access the usage credits we have a company for tasks which require API requests.
+
+**3.** You will then want to reach the api-keys section. Click the green `Create new secret key` which you'll find in the top corner.
+
+**4.** You'll have the option to rename the key to something useful - the name of the project or internal work will be helpful - and keep the OpenAI project as "Default project" and Permissions as "All".
+
+**5.** You will then be provided with the opportunity to copy the provided API key, this is the one chance you will get to obtain it- after you click off this pop up you won’t be able to view the full API key again and you’ll need to request a new one. Because of this, make sure you copy the key and add it to this private Google Sheet where the DS team keeps the API Keys. Remember that using the API costs money, so if this key is used by others we risk someone using up all of our API credits! We've discussed above the `Dos and Don'ts` of managing API keys, so if in any doubt, please refer to that section at anytime.
+
+## HuggingFace API Key
+
+Much like creating your own API key for OpenAI's API, you can follow similar steps if you need to use a HuggingFace model for a particular workflow:
+
+**1.** You will need to sign up for an account on HuggingFace wiht your SAMY email, and as before, request permission to have access to the organisational token permissions.
+
+**2. ** After creating your account, log in and go to your `Account Settings`. You can find this in the top-right corner of the screen.
+
+**3.** You can find a dropdown option to access `Access Tokens` - this is where you can generate and manage your API keys.
+
+**4.** You can create your new API key by clicking on `Generate New API Key`. Again, give it an appropriate name based on your research question or project. Make sure to adjust your permissions to `Read access` before generating the key so you will be able to access the API (more on permissions in the HuggingFace documentation on tokens).
+
+**5.** Again, be sure to copy your new API key before leaving the page, as this is the only time it will be visible for you.
+
+
+# EndpointR & API Usage
+
+Thanks to the introduction of EndpointR into our workflow, managing API keys has become a great deal simpler (and safer). There are two main functions within EndpointR which help us manage API keys into our workflow, namely, get_api_key() and set_api_key(). There will be many more details on Jack's EndpointR vignette, but for now, we can look at the ways we as a team handle interact with APIs in the most prevalent use cases.
+
+One big thing that helps our workflow a lot here is the fact the function set_api_key() uses askpass to accept API keys rather than code, so no keys will show up in your .Rhistory, and just adds an extra layer of security overall.
+
+::: callout-note
+**- Use set_api_key() and determine your authorisation provider (e.g. OPEN_API_KEY or HF_API_KEY).**
+
+**- You will then be provided with an askpass pop-up box. Paste the API key you've copied from your API provider as discussed previously, and set this key for your workflow.**
+
+**- You only now need to call the api key with the get_api_key() function, as this key is now stored safely without any additional steps.**
+:::
+
+
+
+::: callout-note
+For comprehensive documentation on EndpointR functions and capabilities, refer to Jack's EndpointR vignette. For information on installation, and further details regarding API key functions, please refer to the documentation written here.
+:::
+
+<div class ="custom-green">
+<details>
+<summary> Example Use Case: EndpointR & API Key Functions
+<div class ="content">
+
+First we'd want to load in our EndpointR library:
+
+```{r load in our library}
+library(EndpointR)
+```
+
+Now, from the steps of obtaining our secret key that we've discussed above, we're going to set this key using one of EndpointR's functions.
+
+```{r set our api key}
+set_api_key("OPENAI_API_KEY")
+```
+
+You will receive an askpass pop-up requiring you to paste in the API key assigned by your third party provider. This function essentially 'assigns' our secret key to this function. Once the key has been set, you will need to restart your RStudio session before continuing. This is also needed when we're trying
+
+After we've done this, it's possible to obtain our API key using the `get_api_key()` function in a safe, secure way that loads the key we need for access approval into our environment as a variable.
+
+```{r get api key}
+api_key <- get_api_key("OPENAI_API_KEY")
+```
+
+In our workstream, we'll need to call this function for when we request a model to perform certain tasks, such as classification.
+
+Let's take a look at a classifying task, for which we'll need to use OpenAI's GPT-4.1-mini. We will need to define the model we want in the 'model' argument (self-explanatory, really!), and because we already have our secret key as an environmental variable, OpenAI's API permits us access for this task request.
+
+```{r calling api}
+classifying_task <- classifying_data_here %>% 
+  oai_complete_df(
+    text_var = english_translation_message,
+    id_var = row_id,
+    system_prompt = system_prompt,
+    schema = fortum_schema, max_tokens = 500L,
+    concurrent_requests = 100,
+    output_file = "data/your_classifying_data_here.csv",
+    model = "gpt-4.1-mini", # this works with our key loaded in
+    chunk_size = 2000
+)
+```
+
+
+(Here, we're using a function for dataframes - but you can easily perform the same task with a single text, you just change the function accordingly.)
+
+The principles apply if we're working with HuggingFace models. We will just need to adjust our code accordingly.
+
+```{r hugging face api key}
+set_api_key("HF_API_KEY")
+```
+
+This change translates to the other helper function:
+
+```{r}
+get_api_key("HF_API_KEY")
+```
+
+You can follow the EndpointR documentation in greater depth to see how the rest of your code will flow as a result of these changes, but in essence, the principle is the exact same if we were calling OpenAI's API.
+
+
+Again, the EndpointR documentation will have much more detail with regards to these variables and their use cases. But this gives us a general gist of how the API key functions work, and where we situate them in a given workflow.
+
+</summary>
+</details>
+</div>
+
+
+::: callout-note
+It's worth remembering that Hugging Face offers two inference options:
+
+Inference API: Free (so good for testing in workflows).
+Dedicated Endpoints: Reliable and fast, but costs money.
+
+Jack's vignette goes over the Inference API, but you can easily switch your endpoint by changing the URL.
+
+:::
+
+
+## Best Practices for Team Usage: Making Requests to the API
+
+Something you'll find in your data science work is the importance of not just pressing a 'run code' button and assuming the work is done - we need the time and space to recognise whether something looks 'not quite right', or whether what we're doing is statistically or empirically viable!
+
+In the case of making API requests, not only can spamming API asks be costly in usage, but we run the risk of missing pivotal insight. 
+
+For example, not sense-checking our test output after running a prompt through the model can cause us more problems down the line if we later see the output looks 'off'. Hence why workflows can be iterative and require food for thought between sending requests to text models.
+
+To save both money and potential issues down the line when making requests to the API, the emphasis should be on mini-experimentation - or testing- throughout the recourse of a workflow. Create dummmy data initially to check things are working - both from the sense of 'the code works' in addition to 'the model output looks like something a human would label', then begin to build up the prompt as needed as you run a sample of your working data.
+
+Being deliberate and measured in this initial part of your workflow can feel as though you're being "slow". In reality, not only is this far more likely to create higher quality output, but this is where the fun part of data science really kicks into gear: creativity, critical thinking, and employing the scientific method to prove our assumptions.
+
+::: callout-note 
+It can feel a bit tricky juggling the demands of workflows, deadlines, and producing quality output all at the same time. I advise even writing bullet points or notes as you go through each stage of testing a prompt on dummy/sampled data. Are there any types of data the model struggles to handle? What about edge cases? Have you included some 'gotchas' into your prompt to ensure the model can handle these more subtle cases? Anything of interest spring to mind? Asking these questions keeps you engaged throughout the work process.
+
+:::
+
+<div class ="custom-green">
+<details>
+<summary> Example Use Case: Dummy Data & Prompt Building
+<div class ="content">
+We'll load up EndpointR in case we haven't already.
+
+```{r}
+library(EndpointR)
+```
+
+As a reminder, we'll use those lovely functions which simplify API calling massively. In this example, we'll assume we've already set the API key. So we just need to retrieve it as an environment variable:
+
+```{r}
+get_api_key("OPENAI_API_KEY")
+```
+
+For this sample workflow, we'll be using OpenAI's API to perform some simple sentiment analysis. Because we want to check it works right off the bat, we can get a completion for a single text only:
+
+```{r}
+sentiment_system_prompt = "Classify the text into sentiment categories.
+The accepted categories are 'positive', 'negative', 'neutral', and 'mixed'.
+A 'mixed' text contains elements of both positive and negative."
+
+text <- "I love cats, they're so cute and full of mischief."
+
+oai_complete_text(
+  text = text,
+  system_prompt = sentiment_system_prompt,
+  model = "gpt-4.1-nano" # EndpointR uses the cheaper model but you can change this as your needs suit
+)
+```
+
+Once we've identified that the code works, and the model isn't spouting total nonsense, we can move onto create a dummy data frame - here, you can put in edge cases or gotchas and see how well your prompt accounts for these - or generate a randomised sample from your real-world data. Again, we want to be prudent enough not to run 100k + rows immediately in case we need to go back and tweak things - remember, API request costs add up!
+
+Notice here we use a different function when dealing with dataframes:
+
+```{r}
+review_df <- data.frame(
+  id = 1:5,
+  text = c(
+    "Absolutely fantastic service! The staff were incredibly helpful and friendly.",
+    "Terrible experience. Food was cold and the waiter was rude.",
+    "Pretty good overall, but nothing special. Average food and service.",
+    "Outstanding meal! Best restaurant I've been to in years. Highly recommend!",
+    "Disappointed with the long wait times. Food was okay when it finally arrived."
+  )
+)
+
+oai_complete_df(
+  review_df,
+  text_var = text,
+  id_var = id,
+  output_file = NULL, # leave this to 'auto' to have your results written to a file in your current working directory
+  system_prompt = sentiment_system_prompt,
+  concurrent_requests = 2, 
+  chunk_size = 5
+)
+```
+
+We will then need to continuously review the output in order to see whether 1) our prompt is pretty robust and 2) the model is able to fulfil our research question sufficiently. If we cannot answer these, it's time to consider other approaches or ways we can solve our problem.
+
+Once we're happy with our testing phase, we can then repeat these steps above with our data proper.
+
+</summary>
+</details>
+</div>
+
+# Understanding Throughput
+
+The throughput measures how many requests the API can handle efficiently within a time period.
+
+As implied through this document, there's a knack to balancing the cost, model selection (and research question demands), and efficient request handling as we call APIs.
+
+## Tokens & Model Usage
+
+APIs generally have costs with their usage (there are freebie options, however this may come at the cost of output robustness). We can measure this usage via tokens. When we input text data into an API, it then breaks our data down into tokens, which we can define as individual units of a language.
+
+Naturally, this means we need to keep tabs on the amount of input and output tokens which are produced in a workflow. Be sure to check out the model pricing information to see the latest costs of the model you'd like to use, in addition to the general differences in model capabilities - we don't always need the most 'advanced' model to answer our research question, and consequently, can save on resources.
+
+:::callout-note
+Tokens are generally about 4 words of English text. 100 tokens are approximately 75 words.
+:::
+
+# Structured Outputs & Schemas, Oh My!
+
+:::callout-note
+If you're interested in finding out more about how structured outputs work, OpenAI have some interesting resources online. For this documentation, we'll just be focusing on why we use them in our work, and a a brief example to showcase their utility.
+:::
+
+Structured outputs are really handy for us to incorporate in our workflow, as they ensure the model will always generate responses that 'agree' with your pre-defined JSON schema.
+
+It's not so much the LLM output is 'incorrect' in terms of meaning - but as we want our output format to be as machine-interpretable as possible for downstream analyses in R or Python, we basically want to make our lives easier (and the output, as accurate as possible), hence the inclusion of structured outputs. As the responses we receive don't follow a specific format, we would need to parse the results again to ensure we can actually **work** with them.
+
+Structured outputs have a plethora of benefits which you'll really reap from as you try them out in practice. For example, integrating your model responses into further workflows or data analysis becomes far easier than trying to make sense of non-deterministic, semi-random outputs we get from LLMs. 
+
+## Structured Output Example
+
+An example can better serve our understanding. Look at a typical LLM output you might receive after performing some sentiment analysis using `gpt-4.1-nano`:
+
+```html
+≥ 1     1 "The sentiment of the text is highly positive."      
+≥ 2     2 "The sentiment of the text is negative."              
+≥ 3     3 "The sentiment of the text is generally neutral with a slight lean towards negative."
+≥ 4     4 "The sentiment of the text is highly positive."       
+≥ 5     5 "The sentiment of the text is negative."            
+```
+Even if we look at the text data and agree with these labels, these are unwieldy formats to work with later down the line. Instead, we can use a schema to determine the format of the response. The EndpointR documentation goes into much greater detail into the different helper functions one can use to define their schema:
+
+```{r}
+sentiment_schema <- create_json_schema(
+  name = "simple_sentiment_schema",
+  schema = schema_object(
+    sentiment = schema_string(description = "Sentiment classification",
+                              enum = c("positive", "negative", "neutral")),
+    required = list("sentiment")
+  )
+)
+
+```
+
+Here, we can see the schema ensures that the model returns a list of emotions/sentiment it detects from the text we feed it, in a structure we define (as per the `enum` field).
+
+Even better, we can even send requests to OpenAI with our schema passed in:
+
+```{r}
+structured_df <- oai_complete_df(
+  review_df,
+  text_var = text,
+  id_var = id,
+  schema = sentiment_schema, # this ensures the model gives us our pre-defined output 
+  output_file = NULL,
+  system_prompt = sentiment_system_prompt,
+  concurrent_requests = 2, 
+  chunk_size = 5
+)
+```
+
+The output we receive will be in a nice, neat JSON format, readily suitable for downstream analyses.
+
+:::callout-note
+It's worth playing around with the different schema objects and how they apply to your project or research question. For instance, `schema_boolean` is particularly useful if you have a number of classification labels to potentially adhere (or not adhere) to your data, hence having a true/false formatted output will make your life easier.
+
+Equally, `schema_enum` is an effective way of making your code clearer and more readable, and because it is designed to keep data values consistent, it reduces errors or unexpected, invalid values. In any case, the EndpointR and OpenAI documents go into much more depth than this page can offer.
+:::
